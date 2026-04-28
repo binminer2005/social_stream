@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBS Chat Widget</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: transparent;
+    font-family: 'Nunito', sans-serif;
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  #chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 340px;
+  }
+
+  /* ── Regular message ── */
+  .msg {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    animation: slideIn 0.35s cubic-bezier(0.22,0.61,0.36,1) both;
+  }
+
+  .msg-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 10px 2px 6px;
+    border-radius: 20px 20px 20px 4px;
+    font-size: 11px;
+    font-weight: 800;
+    margin-bottom: 3px;
+    letter-spacing: 0.3px;
+  }
+
+  .badge-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .badge-star {
+    font-size: 10px;
+  }
+
+  .msg-bubble {
+    background: rgba(255,255,255,0.92);
+    color: #1a1a2e;
+    border-radius: 4px 18px 18px 18px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    max-width: 300px;
+    line-height: 1.4;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── Roles ── */
+  .role-subscriber .msg-badge  { background: #ff4e87; color: #fff; }
+  .role-subscriber .badge-dot  { background: #fff; }
+
+  .role-vip .msg-badge          { background: #cc44ff; color: #fff; }
+  .role-vip .badge-dot          { background: #fff; }
+  .role-vip .badge-star         { content: "♥"; }
+
+  .role-moderator .msg-badge    { background: #00c896; color: #fff; }
+  .role-moderator .badge-dot    { background: #fff; }
+
+  .role-viewer .msg-badge       { background: rgba(80,80,140,0.75); color: #ddd; }
+  .role-viewer .badge-dot       { background: #9f9fcc; }
+
+  /* ── Donation / Tip card ── */
+  .msg-tip {
+    background: linear-gradient(135deg, #1bcc88 0%, #12a870 100%);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) both;
+    box-shadow: 0 4px 16px rgba(0,200,130,0.35);
+    max-width: 300px;
+  }
+
+  .tip-icon {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .tip-info { flex: 1; }
+
+  .tip-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+  }
+
+  .tip-amount {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .tip-text {
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #d0fff0;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  /* ── Raid card ── */
+  .msg-raid {
+    background: rgba(30,30,70,0.88);
+    border: 2px solid rgba(140,100,255,0.6);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) both;
+    box-shadow: 0 4px 20px rgba(100,60,255,0.3);
+    max-width: 300px;
+  }
+
+  .raid-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(140,100,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    border: 2px solid rgba(140,100,255,0.5);
+  }
+
+  .raid-info { flex: 1; }
+
+  .raid-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: #e0d0ff;
+  }
+
+  .raid-sub {
+    font-size: 12px;
+    color: rgba(180,160,255,0.8);
+    font-weight: 700;
+  }
+
+  /* ── Avatar with emote ── */
+  .msg-emote {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  .emote-badge {
+    background: #ff4e87;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-bottom: 4px;
+  }
+
+  .emote-img {
+    width: 72px; height: 72px;
+    border-radius: 14px;
+    border: 3px solid #ff4e87;
+    object-fit: cover;
+    box-shadow: 0 4px 16px rgba(255,78,135,0.4);
+  }
+
+  .emote-placeholder {
+    width: 72px; height: 72px;
+    border-radius: 14px;
+    border: 3px solid #ff4e87;
+    background: linear-gradient(135deg, #ff6ea6, #cc44ff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 4px 16px rgba(255,78,135,0.4);
+  }
+
+  /* ── Stars & sparkles decoration ── */
+  .star {
+    position: absolute;
+    color: #ffe066;
+    font-size: 16px;
+    animation: twinkle 1.5s ease-in-out infinite;
+    pointer-events: none;
+    text-shadow: 0 0 8px rgba(255,220,100,0.8);
+  }
+
+  /* ── Animations ── */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(14px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes twinkle {
+    0%,100% { opacity: 0.4; transform: scale(0.8); }
+    50%      { opacity: 1;   transform: scale(1.2); }
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-8px); }
+  }
+
+  .removing {
+    animation: fadeOut 0.4s ease forwards;
+  }
+</style>
+</head>
+<body>
+
+<div id="chat-container"></div>
+
+<script>
+const container = document.getElementById('chat-container');
+const MAX_MESSAGES = 8;
+
+function badge(role, name) {
+  const icons = {
+    subscriber: '★',
+    vip:        '♥',
+    moderator:  '✔',
+    viewer:     '●'
+  };
+  return `
+    <div class="msg-badge">
+      <span class="badge-dot"></span>
+      <span class="badge-star">${icons[role] || '●'}</span>
+      ${name}
+    </div>`;
+}
+
+function addRegular({ role = 'viewer', name, text }) {
+  const el = document.createElement('div');
+  el.className = `msg role-${role}`;
+  el.innerHTML = `
+    ${badge(role, name)}
+    <div class="msg-bubble">${text}</div>`;
+  push(el);
+}
+
+function addTip({ name, amount, text }) {
+  const el = document.createElement('div');
+  el.className = 'msg-tip';
+  el.innerHTML = `
+    <div class="tip-icon">💵</div>
+    <div class="tip-info">
+      <div class="tip-name">${name}</div>
+      <div class="tip-amount">Donated ${amount}</div>
+      ${text ? `<div class="tip-text">${text}</div>` : ''}
+    </div>`;
+  push(el);
+}
+
+function addRaid({ name, viewers }) {
+  const el = document.createElement('div');
+  el.className = 'msg-raid';
+  el.innerHTML = `
+    <div class="raid-icon">👥</div>
+    <div class="raid-info">
+      <div class="raid-name">${name}</div>
+      <div class="raid-sub">Raided with ${viewers} viewers!</div>
+    </div>`;
+  push(el);
+}
+
+function addEmote({ role = 'subscriber', name, emoji = '😂' }) {
+  const el = document.createElement('div');
+  el.className = 'msg-emote';
+  el.innerHTML = `
+    <div class="emote-badge">★ ${name}</div>
+    <div class="emote-placeholder">${emoji}</div>`;
+  push(el);
+}
+
+function push(el) {
+  container.appendChild(el);
+  const items = container.querySelectorAll(':scope > *');
+  if (items.length > MAX_MESSAGES) {
+    const old = items[0];
+    old.classList.add('removing');
+    setTimeout(() => old.remove(), 400);
+  }
+  el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+/* ── Kết nối Social Stream Ninja (Zoom chat) ── */
+const SESSION_ID = 'ezzgbQWT3C';
+let ws;
+
+function connectSSN() {
+  ws = new WebSocket('https://io.socialstream.ninja/dock.html?session=' + SESSION_ID);
+
+  ws.onopen = () => {
+    console.log('SSN connected');
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      const d = data.detail || data;
+      if (!d || !d.chatmessage) return;
+
+      const name = d.chatname || 'viewer';
+      const text = d.chatmessage || '';
+      const type = (d.type || '').toLowerCase();
+
+      if (type === 'donation' || type === 'superchat') {
+        addTip({ name, amount: d.amount ? '$' + d.amount : '', text });
+      } else if (type === 'raid' || type === 'host') {
+        addRaid({ name, viewers: d.amount || d.viewers || '?' });
+      } else {
+        const role = type === 'mod' || type === 'moderator' ? 'moderator'
+                   : type === 'vip' ? 'vip'
+                   : type === 'sub' || type === 'subscriber' ? 'subscriber'
+                   : 'viewer';
+        addRegular({ role, name, text });
+      }
+    } catch(err) {}
+  };
+
+  ws.onclose = () => {
+    console.log('SSN disconnected, reconnecting in 3s...');
+    setTimeout(connectSSN, 3000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+connectSSN();
+</script>
+</body>
+</html>
