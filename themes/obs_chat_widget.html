@@ -318,7 +318,7 @@ const SESSION_ID = 'ezzgbQWT3C';
 let ws;
 
 function connectSSN() {
-  ws = new WebSocket('https://io.socialstream.ninja/dock.html?session=' + SESSION_ID);
+  ws = new WebSocket('https://socialstream.ninja/dock.html?session=' + SESSION_ID);
 
   ws.onopen = () => {
     console.log('SSN connected');
